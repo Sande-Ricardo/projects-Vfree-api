@@ -9,7 +9,7 @@ from config import settings
 
 gemini_client = genai.Client(api_key=settings.gemini_api_key)
 
-async def ingest_document(file_content: bytes, file_name: str, title: str, project_id) -> dict:
+async def ingest_document(file_content: bytes, file_name: str, title: str, project_id:str) -> dict:
     file_type = file_name.split(".")[-1].lower()
     supabase = get_supabase()
 
@@ -43,7 +43,7 @@ async def ingest_document(file_content: bytes, file_name: str, title: str, proje
                 model=settings.embedding_model,
                 contents=chunk.page_content,
             )
-            embedding = response.embeddings[0].value
+            embedding = response.embeddings[0].values
 
             chunk_records.append({
                 "document_id": document_id,

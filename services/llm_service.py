@@ -64,9 +64,9 @@ async def generate_response(
     )
     
     if history:
-        messages = [messages[0]] + history + messages[-1]
+        messages = [messages[0]] + history + messages[-1:]
     
-    response = groq_client.completions.create(
+    response = groq_client.chat.completions.create(
         model=settings.llm_model,
         messages=messages,
         temperature=0.3,

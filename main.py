@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.ingest import router as ingest_router
 from routers.query import router as query_router
 from routers.documents import router as documents_router
+from routers.projects import router as projects_router
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ app.add_middleware(
 app.include_router(ingest_router)
 app.include_router(query_router)
 app.include_router(documents_router)
+app.include_router(projects_router)
 
 @app.get("/", tags=["Root"])
 async def root():

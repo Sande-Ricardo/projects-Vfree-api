@@ -1,13 +1,20 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from services.ingest_service import ingest_document
+from db.client import get_supabase
 
-router = APIRouter()
+router = APIRouter(prefix="/ingest", tags=["Ingest"])
 
-@router.post("/ingest", tags=["Ingest"])
+@router.post("")
 async def ingest(
     file: UploadFile = File(...),
-    title: str = Form(...)
+    title: str = Form(...),
+    project_id: str = Form(...)
 ):
+    supabase = get_supabase()
+    project = supabase.table("projects").select("*").eq("id", project_id).single().execute()
+    if not project.data:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
     allowed_types = ["pdf", "txt", "md"]
     file_type = file.filename.split(".")[-1].lower()
     
@@ -18,5 +25,10 @@ async def ingest(
         )
         
     file_content = await file.read()
-    result = await ingest_document(file_content, file.filename, title)
+    result = await ingest_document(
+        file_content = file_content,
+        file_name = file.filename,
+        title = title,
+        project_id = project_id
+    )
     return result
