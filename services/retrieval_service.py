@@ -11,7 +11,7 @@ async def retrieve_chunks(question:str, project_id:str, top_k:int = None) -> lis
         model= settings.embedding_model,
         contents= question
     )
-    query_embedding = response.embeddings[0].value
+    query_embedding = response.embeddings[0].values
     
     supabase = get_supabase()
     result = supabase.rpc('match_chunks', {
