@@ -19,7 +19,7 @@ async def get_history(conversation_id:str, limit:int = 10) -> list:
     
     messages = list(reversed(response.data))
     
-    return[{"rolr": m["role"], "content": m["content"]} for m in messages]
+    return[{"role": m["role"], "content": m["content"]} for m in messages]
 
 async def save_messages(conversation_id:str, project_id:str, question:str, answer:str) -> None:
     supabase = get_supabase()

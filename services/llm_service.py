@@ -6,71 +6,57 @@ groq_client = OpenAI(
     base_url=settings.groq_base_url
 )
 
-def build_prompt(
-    question:str,
+def build_system_prompt(
     chunks:list,
     instructions:str = "",
     memory:list = []
-) -> list:
-    context_parts = []
-    for i, chunk in enumerate(chunks):
-        context_parts.append(
-            f"[Fragment {i+1}]\n"
-            f"Content: {chunk['content']}\n"
-            )
-    context = "\n---\n".join(context_parts)
-    
-    memory_text = ""
-    if memory:
-        memory_lines = "\n".join(f"-{m['key']}:{m['value']}" for m in memory)
-        memory_text = f"\nKNOWN USER INFORMATION:\n{memory_lines}\n"
-    
+) -> str:
     system_content = instructions if instructions else (
         "You are a helpful assistant. "
         "Answer using only the information in the provided documentation fragments. "
-        "If the answer is not in the fragments, say you so explicitly. "
-        "Cite fragment umbers using [Fragment N]"
+        "If the answer is not in the fragments, say so explicitly. "
+        "Cite fragment numbers using [Fragment N]."
     )
     
-    if memory_text:
-        system_content += memory_text
+    if memory:
+        memory_lines = "\n".join(f"- {m['key']}: {m['value']}" for m in memory)
+        system_content += f"\n\nKNOWN USER INFORMATION:\n{memory_lines}"
         
-    if context_parts:
-        system_content += f"\n\nDOCUMENTATION FRAGMENTS:\n{context}\n"
-
-    return [
-        {"role": "system", "content": system_content},
-        {"role": "user", "content": question}
-    ]
+    if chunks:
+        context_parts = []
+        for i, chunk in enumerate(chunks):
+            context_parts.append(
+                f"[Fragment {i+1}]\n"
+                f"Content: {chunk['content']}"
+            )
+        context = "\n---\n".join(context_parts)
+        system_content += f"\n\nDOCUMENTATION FRAGMENTS:\n{context}"
+    return system_content
 
 async def generate_response(
     question:str,
     chunks:list,
     history:list = [],
-    instructions:str = "",
+    instructions: str = [],
     memory:list = []
 ) -> dict:
     if not chunks and not history:
         return {
-            "answer": "No relevant information found.",
-            "sources": []
-            }
-        
-    messages = build_prompt(
-        question,
-        chunks,
-        instructions,
-        memory
-    )
-    system_message = messages[0]
-    user_message = messages[1]
+            "answer": "No relevant information found",
+            "sources":[]
+        }
+    system_prompt = build_system_prompt(chunks, instructions, memory)
     
-    final_messages = [system_message] + history + [user_message]
+    messages = (
+        [{"role":"system", "content":system_prompt}]
+        + history
+        + [{"role":"user", "content":question}]
+    )
     
     response = groq_client.chat.completions.create(
-        model=settings.llm_model,
-        messages=final_messages,
-        temperature=0.3,
+        model = settings.llm_model,
+        messages= messages,
+        temperature= 0.3,
     )
     
     sources = [

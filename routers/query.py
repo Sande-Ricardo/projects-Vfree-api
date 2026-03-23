@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from services.retrieval_service import retrieve_chunks
 from services.llm_service import generate_response
 from db.client import get_supabase
-from services.conversation_service import get_or_create_conversation, save_messages, get_history, get_memory
+from services.conversation_service import (get_or_create_conversation, save_messages, get_history, get_memory)
+from services.memory_service import extract_and_save_memory
 
 router = APIRouter(prefix="/query", tags=["query"])
 
@@ -28,7 +29,7 @@ async def query(request: QueryRequest):
     conversation_id = await get_or_create_conversation(request.project_id)
     
     chunks, history, memory = await _gather_context(
-        question = request.project_id,
+        question = request.question,
         conversation_id = conversation_id,
         project_id = request.project_id,
         top_k = request.top_k)
@@ -47,6 +48,8 @@ async def query(request: QueryRequest):
         question = request.question,
         answer = result["answer"]
     )
+    
+    await extract_and_save_memory(request.project_id, request.question)
         
     return {
         "question": request.question,
