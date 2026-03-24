@@ -1,32 +1,37 @@
 from fastapi import APIRouter, HTTPException
 from db.client import get_supabase
 
-router = APIRouter()
+router = APIRouter(prefix="/documents", tags=["Documents"])
 
-@router.get("/documents", tags=["Documents"])
-async def get_documents():
+@router.get("/")
+async def list_documents(project_id:str):
     supabase = get_supabase()
     
-    result = supabase.table("documents").select("*").order(
-        "created_at",
-        desc=True
-    ).execute()
+    result = supabase.table("documents").select("id, title, file_name, file_type, file_size, status, created_at").eq("project_id", project_id).order("created_at", desc = True).execute()
+    return result.data
+# async def get_documents():
+#     supabase = get_supabase()
     
-    documents = []
-    for doc in result.data:
-        chunks_result = supabase.table("chunks").select(
-            "id", count="exact"
-        ).eq("document_id",doc["id"]).execute()
+#     result = supabase.table("documents").select("*").order(
+#         "created_at",
+#         desc=True
+#     ).execute()
+    
+#     documents = []
+#     for doc in result.data:
+#         chunks_result = supabase.table("chunks").select(
+#             "id", count="exact"
+#         ).eq("document_id",doc["id"]).execute()
         
-        documents.append({
-            **doc,
-            "chunk_count": chunks_result.count
-        })
+#         documents.append({
+#             **doc,
+#             "chunk_count": chunks_result.count
+#         })
     
-    return {"documents": documents}
+#     return {"documents": documents}
 
 
-@router.delete("/documents/{document_id}", tags=["Documents"])
+@router.delete("/{document_id}")
 async def delete_document(document_id:str):
     supabase = get_supabase()
     
