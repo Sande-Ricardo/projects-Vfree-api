@@ -4,16 +4,40 @@ from api_client import get_projects, create_project, delete_project, update_proj
 st.set_page_config(page_title = "Projects", layout = "wide")
 st.title("Project Management")
 
-with st.expander("➕ New project", expanded = False):
-    with st.form("create_project_form"):
+# with st.expander("➕ New project", expanded = False):
+#     with st.form("create_project_form"):
+#         new_title = st.text_input("Project name")
+#         new_instructions = st.text_area(
+#             "Assistant instructions",
+#             placeholder = "Ex: Always reply in english. Be concise. Use no more than 5 sentences.",
+#             height = 120
+#         )
+#         submitted = st.form_submit_button("Create project")
+        
+#         if submitted:
+#             if not new_title.strip():
+#                 st.error("The name can't be empty.")
+#             else:
+#                 try:
+#                     create_project(new_title.strip(), new_instructions.strip())
+#                     st.success(f"'{new_title}' project created.")
+#                     st.rerun()
+#                 except Exception as e:
+#                     st.error(f"Error creating project: {e}")
+    
+if "create_form_key" not in st.session_state:
+    st.session_state.create_form_key = 0
+
+with st.expander("➕ New project", expanded=False):
+    with st.form(key=f"create_project_form_{st.session_state.create_form_key}"):
         new_title = st.text_input("Project name")
         new_instructions = st.text_area(
             "Assistant instructions",
-            placeholder = "Ex: Always reply in english. Be concise. Use no more than 5 sentences.",
-            height = 120
+            placeholder="Ej: Always reply in [language]. Be concise. Use no more than 5 sentences.",
+            height=120
         )
         submitted = st.form_submit_button("Create project")
-        
+
         if submitted:
             if not new_title.strip():
                 st.error("The name can't be empty.")
@@ -21,6 +45,7 @@ with st.expander("➕ New project", expanded = False):
                 try:
                     create_project(new_title.strip(), new_instructions.strip())
                     st.success(f"'{new_title}' project created.")
+                    st.session_state.create_form_key += 1
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error creating project: {e}")

@@ -9,6 +9,8 @@ from config import settings
 
 gemini_client = genai.Client(api_key=settings.gemini_api_key)
 
+BATCH_SIZE = 10
+
 async def ingest_document(file_content: bytes, file_name: str, title: str, project_id:str) -> dict:
     file_type = file_name.split(".")[-1].lower()
     supabase = get_supabase()
@@ -54,7 +56,10 @@ async def ingest_document(file_content: bytes, file_name: str, title: str, proje
                 "metadata": chunk.metadata
             })
 
-        supabase.table("chunks").insert(chunk_records).execute()
+        # supabase.table("chunks").insert(chunk_records).execute()
+        for i in range(0, len(chunk_records), BATCH_SIZE):
+            batch = chunk_records[i:i + BATCH_SIZE]
+            supabase.table("chunks").insert(batch).execute()
 
         supabase.table("documents").update(
             {"status": "ready"}
