@@ -4,6 +4,9 @@ from api_client import get_documents, upload_document, delete_document
 st.set_page_config(page_title="Documents", layout="wide")
 st.title("Documents")
 
+if "upload_reset_counter" not in st.session_state:
+    st.session_state.upload_reset_counter = 0
+
 if not st.session_state.get("selected_project"):
     st.warning("Select a project from side menu to start.")
     st.stop()
@@ -15,11 +18,17 @@ st.caption(f"Project: **{project_data.get('title', '')}**")
 # --- Subir documento ---
 with st.expander("Upload document", expanded=False):
     with st.form("upload_form"):
+        form_suffix = st.session_state.upload_reset_counter
+        
         uploaded_file = st.file_uploader(
             "Select a file",
-            type=["pdf", "txt", "md"]
+            type=["pdf", "txt", "md"],
+            key=f"file_uploader_{form_suffix}"
         )
-        doc_title = st.text_input("Document title")
+        doc_title = st.text_input(
+            "Document title", 
+            key=f"doc_title_{form_suffix}"
+        )
         submit_upload = st.form_submit_button("Upload")
 
         if submit_upload:
@@ -39,13 +48,15 @@ with st.expander("Upload document", expanded=False):
                         st.success(
                             f"Document processed: {result['chunk_count']} indexed fragments."
                         )
+                        
+                        st.session_state.upload_reset_counter += 1
                         st.rerun()
+                        
                     except Exception as e:
                         st.error(f"Error uploading file: {e}")
 
 st.divider()
 
-# --- Listar documentos ---
 try:
     documents = get_documents(project_id)
 except Exception:
